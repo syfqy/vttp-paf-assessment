@@ -7,12 +7,15 @@ import jakarta.json.JsonReader;
 import java.io.StringReader;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -23,11 +26,12 @@ import vttp2022.paf.assessment.eshop.models.Order;
 import vttp2022.paf.assessment.eshop.models.OrderStatus;
 import vttp2022.paf.assessment.eshop.respositories.CustomerRepository;
 import vttp2022.paf.assessment.eshop.respositories.OrderRepository;
+import vttp2022.paf.assessment.eshop.services.WarehouseService;
+import vttp2022.paf.assessment.utils.Utils;
 
 @RestController
 @RequestMapping(
   path = "/api/order",
-  consumes = MediaType.APPLICATION_JSON_VALUE,
   produces = MediaType.APPLICATION_JSON_VALUE
 )
 public class OrderController {
@@ -40,16 +44,19 @@ public class OrderController {
   @Autowired
   private OrderRepository orderRepo;
 
-  @PostMapping
-  public ResponseEntity<String> postOrder(@RequestBody String orderRequest) {
-    //check if customer exists
+  @Autowired
+  private WarehouseService warehouseSvc;
 
+  @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<String> postOrder(@RequestBody String orderRequest) {
     System.out.println("order >>>: " + orderRequest);
     JsonReader jsonReader = Json.createReader(new StringReader(orderRequest));
     JsonObject orderJson = jsonReader.readObject();
 
+    //check if customer exists
     String customerName = orderJson.getString("name");
     Optional<Customer> opt = customerRepo.findCustomerByName(customerName);
+
     // if customer does not exist return error
     if (opt.isEmpty()) {
       JsonObject errJson = Json
@@ -75,15 +82,10 @@ public class OrderController {
     */
     Order order = new Order();
     order.setOrderId(UUID.randomUUID().toString().substring(0, 8));
-    order.setDeliveryId(UUID.randomUUID().toString().substring(8));
     order.setName(customer.getName());
     order.setAddress(customer.getAddress());
     order.setEmail(customer.getEmail());
 
-    // init order status
-    OrderStatus orderStatus = new OrderStatus();
-    orderStatus.setOrderId(order.getOrderId());
-    orderStatus.setDeliveryId(order.getDeliveryId());
     // add line items
     JsonArray lineItemsJsonArr = orderJson.getJsonArray("lineItems");
 
@@ -102,7 +104,7 @@ public class OrderController {
     }
     order.setLineItems(lineItems);
 
-    // save
+    // save order to db
     if (!orderRepo.createOrder(order)) {
       JsonObject errJson = Json
         .createObjectBuilder()
@@ -112,13 +114,29 @@ public class OrderController {
         .status(HttpStatus.INTERNAL_SERVER_ERROR)
         .body(errJson.toString());
     }
+
+    // dispatch order
+    OrderStatus orderStatus = warehouseSvc.dispatch(order);
+
+    // save order status
+    orderRepo.createOrderStatus(orderStatus);
+
+    // return response
+    JsonObject resp = Utils.orderStatusToJson(orderStatus);
+    System.out.println("order status >>> " + resp);
+    return ResponseEntity.ok(resp.toString());
+  }
+
+  @GetMapping("/{name}/status")
+  public ResponseEntity<String> getOrderCounts(@PathVariable String name) {
+    Map<String, Integer> orderCountsMap = orderRepo.getOrderCounts(name);
+
     JsonObject resp = Json
       .createObjectBuilder()
-      .add(
-        "created",
-        "order id: %s created successfully".formatted(order.getOrderId())
-      )
+      .add("name", name)
+      .add("dispatched", orderCountsMap.getOrDefault("dispatched", 0))
+      .add("pending", orderCountsMap.getOrDefault("pending", 0))
       .build();
-    return ResponseEntity.status(HttpStatus.CREATED).body(resp.toString());
+    return ResponseEntity.ok(resp.toString());
   }
 }

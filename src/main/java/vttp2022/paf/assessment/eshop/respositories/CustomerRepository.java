@@ -1,6 +1,7 @@
 package vttp2022.paf.assessment.eshop.respositories;
 
 import static vttp2022.paf.assessment.eshop.respositories.Queries.*;
+import static vttp2022.paf.assessment.utils.Utils.*;
 
 import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,7 +26,7 @@ public class CustomerRepository {
     );
 
     if (!rs.next()) return Optional.empty();
-    Customer customer = Customer.create(rs);
+    Customer customer = customerFromRs(rs);
     return Optional.of(customer);
   }
 }
