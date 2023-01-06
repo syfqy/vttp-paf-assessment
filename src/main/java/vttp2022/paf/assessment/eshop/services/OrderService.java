@@ -8,7 +8,6 @@ import vttp2022.paf.assessment.eshop.models.LineItem;
 import vttp2022.paf.assessment.eshop.models.Order;
 import vttp2022.paf.assessment.eshop.respositories.LineItemRepository;
 import vttp2022.paf.assessment.eshop.respositories.OrderRepository;
-import vttp2022.paf.assessment.eshop.respositories.OrderStatusRepository;
 
 @Service
 public class OrderService {

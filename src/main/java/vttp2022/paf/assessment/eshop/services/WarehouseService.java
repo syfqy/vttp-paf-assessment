@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 import vttp2022.paf.assessment.eshop.models.Order;
 import vttp2022.paf.assessment.eshop.models.OrderStatus;
 import vttp2022.paf.assessment.utils.Utils;
@@ -14,7 +15,7 @@ import vttp2022.paf.assessment.utils.Utils;
 @Service
 public class WarehouseService {
 
-  private final String WAREHOUSE_URL = "http://pafchuklee.com/dispatch";
+  private final String WAREHOUSE_URL = "http://paf.chuklee.com/dispatch";
   private final String SYAFIQ = "Muhammad Syafiq Bin Md Yusof";
 
   // You cannot change the method's signature
@@ -22,6 +23,14 @@ public class WarehouseService {
   public OrderStatus dispatch(Order order) {
     // TODO: Task 4
 
+    // build url
+    String url = UriComponentsBuilder
+      .fromUriString(WAREHOUSE_URL)
+      .path("/")
+      .path(order.getOrderId())
+      .toUriString();
+
+    System.out.println("URL >>> " + url);
     // build request payload
     JsonObject requestPayload = Utils.orderToJson(order, SYAFIQ);
     System.out.println("Request payload >>> " + requestPayload);
@@ -29,6 +38,7 @@ public class WarehouseService {
     RequestEntity<String> req = RequestEntity
       .post(WAREHOUSE_URL)
       .contentType(MediaType.APPLICATION_JSON)
+      .accept(MediaType.APPLICATION_JSON)
       .body(requestPayload.toString());
 
     // create orderStatus
