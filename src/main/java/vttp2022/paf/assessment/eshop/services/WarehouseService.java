@@ -36,7 +36,7 @@ public class WarehouseService {
     System.out.println("Request payload >>> " + requestPayload);
 
     RequestEntity<String> req = RequestEntity
-      .post(WAREHOUSE_URL)
+      .post(url)
       .contentType(MediaType.APPLICATION_JSON)
       .accept(MediaType.APPLICATION_JSON)
       .body(requestPayload.toString());
