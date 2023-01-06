@@ -33,6 +33,16 @@ CREATE TABLE orders (
     FOREIGN KEY (customer_name) REFERENCES customers (name)
 );
 
+DROP TABLE IF EXISTS line_items;
+CREATE TABLE line_items (
+    order_id VARCHAR(32) NOT NULL,
+    item VARCHAR(256) NOT NULL,
+    quantity INT NOT NULL,
+
+    PRIMARY KEY (order_id, item),
+    FOREIGN KEY (order_id) REFERENCES orders (order_id)
+);
+
 DROP TABLE IF EXISTS order_status;
 CREATE TABLE order_status (
     order_id VARCHAR(32) NOT NULL,

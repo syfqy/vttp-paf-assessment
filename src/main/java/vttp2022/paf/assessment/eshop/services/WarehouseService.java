@@ -24,6 +24,7 @@ public class WarehouseService {
 
     // build request payload
     JsonObject requestPayload = Utils.orderToJson(order, SYAFIQ);
+    System.out.println("Request payload >>> " + requestPayload);
 
     RequestEntity<String> req = RequestEntity
       .post(WAREHOUSE_URL)
@@ -36,7 +37,7 @@ public class WarehouseService {
 
     RestTemplate template = new RestTemplate();
     try {
-      // send request to dispatch server, if successful, set deliveryId
+      // send request to server, if successful, set deliveryId and status to dispatched
       ResponseEntity<String> resp = template.exchange(req, String.class);
       JsonObject payload = Utils.bodyToJson(resp.getBody());
       orderStatus.setDeliveryId(payload.getString("deliveryId"));

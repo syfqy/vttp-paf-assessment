@@ -20,12 +20,16 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import vttp2022.paf.assessment.eshop.controllers.exceptions.OrderException;
 import vttp2022.paf.assessment.eshop.models.Customer;
 import vttp2022.paf.assessment.eshop.models.LineItem;
 import vttp2022.paf.assessment.eshop.models.Order;
 import vttp2022.paf.assessment.eshop.models.OrderStatus;
 import vttp2022.paf.assessment.eshop.respositories.CustomerRepository;
+import vttp2022.paf.assessment.eshop.respositories.LineItemRepository;
 import vttp2022.paf.assessment.eshop.respositories.OrderRepository;
+import vttp2022.paf.assessment.eshop.respositories.OrderStatusRepository;
+import vttp2022.paf.assessment.eshop.services.OrderService;
 import vttp2022.paf.assessment.eshop.services.WarehouseService;
 import vttp2022.paf.assessment.utils.Utils;
 
@@ -42,7 +46,10 @@ public class OrderController {
   private CustomerRepository customerRepo;
 
   @Autowired
-  private OrderRepository orderRepo;
+  private OrderStatusRepository orderStatusRepo;
+
+  @Autowired
+  private OrderService orderSvc;
 
   @Autowired
   private WarehouseService warehouseSvc;
@@ -86,7 +93,7 @@ public class OrderController {
     order.setAddress(customer.getAddress());
     order.setEmail(customer.getEmail());
 
-    // add line items
+    // create and add line items
     JsonArray lineItemsJsonArr = orderJson.getJsonArray("lineItems");
 
     List<LineItem> lineItems = new LinkedList<>();
@@ -104,8 +111,10 @@ public class OrderController {
     }
     order.setLineItems(lineItems);
 
-    // save order to db
-    if (!orderRepo.createOrder(order)) {
+    // save order and line items to db
+    try {
+      orderSvc.createOrder(order);
+    } catch (OrderException ex) {
       JsonObject errJson = Json
         .createObjectBuilder()
         .add("error", "Cannot create order %s".formatted(order.getOrderId()))
@@ -119,7 +128,7 @@ public class OrderController {
     OrderStatus orderStatus = warehouseSvc.dispatch(order);
 
     // save order status
-    orderRepo.createOrderStatus(orderStatus);
+    orderStatusRepo.createOrderStatus(orderStatus);
 
     // return response
     JsonObject resp = Utils.orderStatusToJson(orderStatus);
@@ -129,7 +138,7 @@ public class OrderController {
 
   @GetMapping("/{name}/status")
   public ResponseEntity<String> getOrderCounts(@PathVariable String name) {
-    Map<String, Integer> orderCountsMap = orderRepo.getOrderCounts(name);
+    Map<String, Integer> orderCountsMap = orderStatusRepo.getOrderCounts(name);
 
     JsonObject resp = Json
       .createObjectBuilder()

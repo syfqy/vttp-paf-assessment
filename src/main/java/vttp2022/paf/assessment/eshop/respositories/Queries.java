@@ -20,6 +20,13 @@ public class Queries {
             INSERT INTO order_status(order_id, delivery_id, status, status_update)
             VALUES(?,?,?,?)
             """;
+
+  public static final String SQL_INSERT_INTO_LINE_ITEMS =
+    """
+        INSERT INTO line_items(order_id, item, quantity)
+        VALUES(?,?,?)
+        """;
+
   public static final String SQL_SELECT_ORDER_STATUS_COUNTS =
     """
             WITH a as (

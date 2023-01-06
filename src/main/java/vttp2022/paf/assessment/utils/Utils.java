@@ -39,7 +39,8 @@ public class Utils {
       .add("orderId", order.getOrderId())
       .add("name", order.getName())
       .add("address", order.getAddress())
-      .add("email", order.getEmail());
+      .add("email", order.getEmail())
+      .add("lineItems", lineItemsArr);
 
     if (createdBy != null) {
       builder.add("createdBy", createdBy);
