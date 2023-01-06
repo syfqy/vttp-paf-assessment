@@ -22,3 +22,26 @@ VALUES
     ('jessica', '698 Candlewood Land, Cabot Cove', 'fletcher@gmail.com'),
     ('dursley', '4 Privet Drive, Little Whinging, Surrey', 'dursley@gmail.com')
 ;
+
+DROP TABLE IF EXISTS orders;
+CREATE TABLE orders (
+    order_id VARCHAR(32) NOT NULL,
+    delivery_id VARCHAR(32) NOT NULL,
+    customer_name VARCHAR(32) NOT NULL,
+    order_date DATE NOT NULL,
+
+    PRIMARY KEY (order_id, delivery_id),
+    FOREIGN KEY (customer_name) REFERENCES customers (name)
+);
+
+DROP TABLE IF EXISTS order_status;
+CREATE TABLE order_status (
+    order_id VARCHAR(32) NOT NULL,
+    delivery_id VARCHAR(32) NOT NULL,
+    status VARCHAR(128),
+
+    PRIMARY KEY (order_id, delivery_id),
+    FOREIGN KEY (order_id, delivery_id) REFERENCES orders (order_id, delivery_id)
+    -- FOREIGN KEY (delivery_id) REFERENCES orders (delivery_id)
+);
+
